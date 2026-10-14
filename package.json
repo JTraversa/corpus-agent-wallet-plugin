@@ -1,12 +1,12 @@
 {
   "name": "@corpusai/agent-wallet-plugin",
   "version": "0.1.0",
-  "description": "MetaMask Agent Wallet plugin for corpusAI on Monad: buy cloud and GPU prices over x402 in USDC, read the on-chain compute price oracle, and mint or redeem permanently funded compute tokens, every signature and transaction through the Agent Wallet.",
+  "description": "MetaMask Agent Wallet plugin for corpusAI on Monad: buy cloud and GPU prices over x402 in USDC, read the on-chain compute price oracle, mint or redeem permanently funded compute tokens, and trade them on Kuru, every signature and transaction through the Agent Wallet.",
   "license": "MIT",
   "type": "module",
   "repository": "https://github.com/JTraversa/corpus-agent-wallet-plugin",
   "homepage": "https://hackathon.trycorpus.ai",
-  "keywords": ["oclif-plugin", "metamask", "agent-wallet", "monad", "x402", "corpusai", "compute"],
+  "keywords": ["oclif-plugin", "metamask", "agent-wallet", "monad", "x402", "corpusai", "compute", "kuru", "orderbook"],
   "files": ["dist", "oclif.manifest.json", "skills", "README.md"],
   "scripts": {
     "build": "tsc -p tsconfig.json && oclif manifest",
@@ -16,7 +16,7 @@
     "bin": "mm",
     "commands": "./dist/commands",
     "topicSeparator": " ",
-    "topics": { "corpus": { "description": "corpusAI on Monad: prices over x402, the compute oracle, and compute tokens" } }
+    "topics": { "corpus": { "description": "corpusAI on Monad: prices over x402, the compute oracle, compute tokens, and their Kuru market" } }
   },
   "mm": {
     "schemaVersion": 1,
@@ -27,7 +27,9 @@
       { "id": "corpus:oracle", "capabilities": ["wallet-read"], "dataAccess": [], "targetChains": [143, 10143] },
       { "id": "corpus:sizes",  "capabilities": ["wallet-read"], "dataAccess": ["accounts"], "targetChains": [143, 10143] },
       { "id": "corpus:mint",   "capabilities": ["wallet-read", "wallet-submit"], "dataAccess": ["accounts", "balances"], "targetChains": [143, 10143] },
-      { "id": "corpus:redeem", "capabilities": ["wallet-read", "wallet-submit"], "dataAccess": ["accounts"], "targetChains": [143, 10143] }
+      { "id": "corpus:redeem", "capabilities": ["wallet-read", "wallet-submit"], "dataAccess": ["accounts"], "targetChains": [143, 10143] },
+      { "id": "corpus:book",   "capabilities": ["wallet-read"], "dataAccess": [], "targetChains": [143, 10143] },
+      { "id": "corpus:trade",  "capabilities": ["wallet-read", "wallet-submit"], "dataAccess": ["accounts", "balances"], "targetChains": [143, 10143] }
     ]
   },
   "peerDependencies": { "@metamask/agent-wallet": "^6.2.0 || ^7.0.0" },
