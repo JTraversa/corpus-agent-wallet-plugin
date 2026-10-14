@@ -11,7 +11,7 @@ const inputs = {
   chainId: { type: InputFieldType.Text, flag: "chain-id", message: "Monad chain id (143)", required: false, prompt: false },
 } satisfies InputSchema;
 
-type PriceResult = { url: string; status: number; paid: boolean; amountUsdc?: string; network?: string; payer?: string; data: unknown };
+type PriceResult = { url: string; status: number; paid: boolean; amountUsdc?: string; network?: string; payer?: string; settlementTx?: string; data: unknown };
 
 export default class CorpusPrice extends CorpusCommand<PriceResult> {
   static override description = "Buy a cloud or GPU price from corpusAI Cloud Pricing, paying the x402 402 in USDC on Monad through the Agent Wallet.";
@@ -61,7 +61,13 @@ export default class CorpusPrice extends CorpusCommand<PriceResult> {
 
     const paid = await fetch(url, { headers: { Accept: "application/json", ...httpClient.encodePaymentSignatureHeader(payload) } });
     const data = await paid.json().catch(() => null);
-    return { url, status: paid.status, paid: paid.ok && Boolean(paid.headers.get("PAYMENT-RESPONSE") || paid.headers.get("X-PAYMENT-RESPONSE")), amountUsdc: (Number(amount) / 1e6).toFixed(6), network: req.network, payer, data };
+    if (paid.status === 402) throw new CommandError("PAYMENT_REJECTED", `The feed rejected the signed payment: ${(data as any)?.error || "402"}.`, `Check that ${payer} holds at least ${Number(amount) / 1e6} USDC on Monad mainnet (143).`);
+    // A 2xx to a request carrying the signed authorization means the feed settled it; the settlement header,
+    // when the response exposes it, carries the transaction hash.
+    const hdr = paid.headers.get("PAYMENT-RESPONSE") || paid.headers.get("X-PAYMENT-RESPONSE");
+    let settlementTx: string | undefined;
+    try { if (hdr) settlementTx = JSON.parse(Buffer.from(hdr, "base64").toString("utf8"))?.transaction; } catch { /* header is optional */ }
+    return { url, status: paid.status, paid: paid.ok, amountUsdc: (Number(amount) / 1e6).toFixed(6), network: req.network, payer, settlementTx, data };
   }
-  override successHint(r: PriceResult): string { return r.paid ? `Paid ${r.amountUsdc} USDC on Monad; price returned.` : `HTTP ${r.status}, no payment made.`; }
+  override successHint(r: PriceResult): string { return r.paid ? `Paid ${r.amountUsdc} USDC on Monad${r.settlementTx ? ` (tx ${r.settlementTx})` : ""}; price returned.` : `HTTP ${r.status}, no payment made.`; }
 }

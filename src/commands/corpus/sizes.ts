@@ -20,10 +20,12 @@ export default class CorpusSizes extends CorpusCommand<SizesResult> {
     let account: `0x${string}` | undefined; try { account = await this.activeAddress(); } catch { account = undefined; }
     const n = Number(await c.readContract({ address: addr, abi: tokenAbi, functionName: "typeCount" })); const sizes: Size[] = [];
     for (let id = 0; id < n; id++) {
+      // Three reads per size, one size at a time: a burst of all of them trips the public RPC's rate limit.
       const [t, s, b] = await Promise.all([
         c.readContract({ address: addr, abi: tokenAbi, functionName: "types", args: [BigInt(id)] }),
         c.readContract({ address: addr, abi: tokenAbi, functionName: "totalSupply", args: [BigInt(id)] }),
         account ? c.readContract({ address: addr, abi: tokenAbi, functionName: "balanceOf", args: [account, BigInt(id)] }) : Promise.resolve(0n)]);
+      await new Promise((r) => setTimeout(r, 250));
       sizes.push({ id, slug: t[0], label: t[1], monthlyUsdc: formatUnits(t[2], 6), principalUsdc: formatUnits(t[3], 6), priceUsdc: formatUnits(t[4], 6), active: t[5], outstanding: s.toString(), held: b.toString() });
     }
     return { chainId: chain.chainId, token: addr, account, sizes };

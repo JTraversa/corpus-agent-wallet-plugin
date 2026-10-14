@@ -136,6 +136,19 @@
           143,
           10143
         ]
+      },
+      {
+        "id": "corpus:faucet",
+        "capabilities": [
+          "wallet-read",
+          "wallet-submit"
+        ],
+        "dataAccess": [
+          "accounts"
+        ],
+        "targetChains": [
+          10143
+        ]
       }
     ]
   },

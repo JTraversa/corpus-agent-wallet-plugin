@@ -107,10 +107,12 @@ export const erc20Abi = parseAbi([
 ]);
 
 export abstract class CorpusCommand<T = void> extends PluginCommand<T> {
-  /** Host-authenticated client when available, else the public Monad RPC. */
+  /** Host-authenticated client when available, else the public Monad RPC. The host's RPC proxy rejects Monad
+   *  testnet ("Invalid chainId"), so testnet reads always use the public endpoint. */
   protected client(chain: ChainInfo): PublicClient {
-    try { if (this.ctx && typeof this.ctx.publicClient === "function") return this.ctx.publicClient(chain.chainId) as PublicClient; } catch { /* fall through */ }
-    return createPublicClient({ transport: http(chain.rpc) });
+    try { if (chain.chainId !== 10143 && this.ctx && typeof this.ctx.publicClient === "function") return this.ctx.publicClient(chain.chainId) as PublicClient; } catch { /* fall through */ }
+    // The public Monad RPCs allow 15 requests a second; back off and retry instead of failing the command.
+    return createPublicClient({ transport: http(chain.rpc, { retryCount: 6, retryDelay: 400 }) });
   }
   /** Submit a transaction through the Agent Wallet (policy-gated, may pause for MFA). */
   protected async sendTx(io: CommandIO, chain: ChainInfo, to: Address, data: Hex, value = 0n): Promise<Hex> {
@@ -123,13 +125,28 @@ export abstract class CorpusCommand<T = void> extends PluginCommand<T> {
   protected async signTyped(io: CommandIO, chain: ChainInfo, typedData: any): Promise<Hex> {
     const executor = await this.ctx.walletExecutor(io, this.pluginCommandId);
     const res: any = await executor({ kind: "typed-data", chainId: chain.chainId, typedData } as any, { signal: io.signal } as any);
-    if (res.status !== "CONFIRMED" || !res.signature) throw new CommandError("SIGNING_FAILED", `Signature not produced: ${res.failureDescription || res.status}`, "Unlock the wallet and approve the signature request.");
-    return res.signature as Hex;
+    // The server wallet answers typed-data requests with status SIGNED; older hosts used CONFIRMED.
+    const sig = res.signature ?? res.result?.signature ?? res.data?.signature;
+    if ((res.status !== "SIGNED" && res.status !== "CONFIRMED") || !sig) throw new CommandError("SIGNING_FAILED", `Signature not produced: ${res.failureDescription || res.status}${sig ? "" : ` (fields: ${Object.keys(res).join(",")})`}`, "Unlock the wallet and approve the signature request.");
+    return sig as Hex;
   }
   protected async activeAddress(): Promise<Address> {
     const svc: any = this.ctx.accountService;
     const acct = await (svc.getActiveAccount?.() ?? svc.getSelectedAccount?.() ?? svc.getAccount?.());
-    const addr = acct?.address ?? acct?.evmAddress ?? (typeof acct === "string" ? acct : undefined);
+    let addr = acct?.address ?? acct?.evmAddress ?? (typeof acct === "string" ? acct : undefined);
+    if (!addr) {
+      // Agent Wallet 7.x exposes the wallet list: getAccounts() -> addresses, getWallets() -> { address, namespace }.
+      const isEvm = (a: unknown): a is string => typeof a === "string" && /^0x[0-9a-fA-F]{40}$/.test(a);
+      const listed: unknown[] = [...((await svc.getAccounts?.()) ?? []), ...(((await svc.getWallets?.("evm")) ?? (await svc.getWallets?.()) ?? []) as any[]).map((w: any) => w?.address)];
+      addr = listed.find(isEvm);
+    }
+    if (!addr) {
+      // Agent Wallet 7.x keeps the selected wallet in its local state: { selectedWallet: { namespace, ref: { address } } }.
+      const st: any = await (this.ctx as any).walletStateManager?.read?.();
+      const sel = st?.selectedWallet; const evm = (a: unknown) => typeof a === "string" && /^0x[0-9a-fA-F]{40}$/.test(a);
+      addr = (sel?.namespace === "evm" && evm(sel?.ref?.address)) ? sel.ref.address
+        : [...(st?.remoteWallets ?? []), ...(st?.byokWallets ?? [])].find((w: any) => w?.namespace === "evm" && evm(w?.address))?.address;
+    }
     if (!addr) throw new CommandError("NO_ACCOUNT", "No active EVM account in the Agent Wallet.", "Run `mm init` and `mm login`, then retry.");
     return addr as Address;
   }
