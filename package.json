@@ -1,5 +1,5 @@
 {
-  "name": "@corpusai/agent-wallet-plugin",
+  "name": "corpus-agent-wallet-plugin",
   "version": "0.1.0",
   "description": "MetaMask Agent Wallet plugin for corpusAI on Monad: buy cloud and GPU prices over x402 in USDC, read the on-chain compute price oracle, mint or redeem permanently funded compute tokens, and trade them on Kuru, every signature and transaction through the Agent Wallet.",
   "license": "MIT",

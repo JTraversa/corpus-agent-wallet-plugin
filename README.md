@@ -1,4 +1,4 @@
-# @corpusai/agent-wallet-plugin
+# corpus-agent-wallet-plugin
 
 A [MetaMask Agent Wallet](https://docs.metamask.io/agent-wallet/) plugin that gives an agent four compute
 superpowers on Monad, with every signature and transaction routed through the Agent Wallet:
@@ -20,7 +20,7 @@ Agent instructions live in [`skills/corpus-compute/SKILL.md`](skills/corpus-comp
 ```bash
 npm install -g @metamask/agent-wallet
 mm config set experimentalPlugins true
-mm plugins install @corpusai/agent-wallet-plugin --accept-permissions
+mm plugins install corpus-agent-wallet-plugin --accept-permissions
 mm corpus price --ticker CX.H100SXM.NEO --json
 ```
 

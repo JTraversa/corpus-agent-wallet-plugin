@@ -1,6 +1,6 @@
 ---
 name: corpus-compute
-description: How an AI agent buys cloud and GPU prices from corpusAI Cloud Pricing over x402 in USDC on Monad, reads the on-chain compute price oracle, and mints or redeems permanently funded compute tokens, all through the MetaMask Agent Wallet plugin @corpusai/agent-wallet-plugin. Use when an agent needs a current or historical cloud, GPU or LLM token price, a verifiable GPU-hour fixing from a contract, or wants to own, transfer, redeem or trade corpus compute on its Kuru order book.
+description: How an AI agent buys cloud and GPU prices from corpusAI Cloud Pricing over x402 in USDC on Monad, reads the on-chain compute price oracle, and mints or redeems permanently funded compute tokens, all through the MetaMask Agent Wallet plugin corpus-agent-wallet-plugin. Use when an agent needs a current or historical cloud, GPU or LLM token price, a verifiable GPU-hour fixing from a contract, or wants to own, transfer, redeem or trade corpus compute on its Kuru order book.
 ---
 
 # corpusAI on Monad (`mm corpus …`)
@@ -15,7 +15,7 @@ the Kuru market currently live on Monad testnet (10143), which is the default fo
 ```bash
 npm install -g @metamask/agent-wallet
 mm config set experimentalPlugins true
-mm plugins install @corpusai/agent-wallet-plugin --accept-permissions
+mm plugins install corpus-agent-wallet-plugin --accept-permissions
 mm login && mm init
 ```
 The wallet needs a little MON for gas and USDC on Monad: a price costs 0.01 to 0.10 USDC; a compute token costs
