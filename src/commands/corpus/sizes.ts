@@ -4,7 +4,7 @@ import { CorpusCommand, DEPLOYMENTS, requireAddress, resolveChain, tokenAbi } fr
 
 const inputs = {
   token: { type: InputFieldType.Text, flag: "token", message: "ComputeToken address", required: false, prompt: false },
-  chainId: { type: InputFieldType.Text, flag: "chain-id", message: "Monad chain id (143 or 10143)", required: false, prompt: false },
+  chainId: { type: InputFieldType.Text, flag: "chain-id", message: "Monad chain id (10143 testnet, where the contracts live; 143 mainnet)", required: false, prompt: false },
 } satisfies InputSchema;
 type Size = { id: number; slug: string; label: string; monthlyUsdc: string; principalUsdc: string; priceUsdc: string; active: boolean; outstanding: string; held: string };
 type SizesResult = { chainId: number; token: string; account?: string; sizes: Size[] };
@@ -16,7 +16,7 @@ export default class CorpusSizes extends CorpusCommand<SizesResult> {
   protected readonly pluginCommandId = "corpus:sizes";
   async execute(io: CommandIO): Promise<SizesResult> {
     const { token, chainId } = await io.resolveInputs(inputs);
-    const chain = resolveChain(chainId); const addr = requireAddress(token, "token", DEPLOYMENTS[chain.chainId]?.token); const c = this.client(chain);
+    const chain = resolveChain(chainId || 10143); const addr = requireAddress(token, "token", DEPLOYMENTS[chain.chainId]?.token); const c = this.client(chain);
     let account: `0x${string}` | undefined; try { account = await this.activeAddress(); } catch { account = undefined; }
     const n = Number(await c.readContract({ address: addr, abi: tokenAbi, functionName: "typeCount" })); const sizes: Size[] = [];
     for (let id = 0; id < n; id++) {

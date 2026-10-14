@@ -7,7 +7,7 @@ const inputs = {
   account: { type: InputFieldType.Text, flag: "account", message: "corpus account id or email that receives the machine", required: true, index: 1 },
   qty: { type: InputFieldType.Text, flag: "qty", message: "How many machines", required: false, prompt: false, index: 2 },
   token: { type: InputFieldType.Text, flag: "token", message: "ComputeToken address", required: false, prompt: false },
-  chainId: { type: InputFieldType.Text, flag: "chain-id", message: "Monad chain id (143 or 10143)", required: false, prompt: false },
+  chainId: { type: InputFieldType.Text, flag: "chain-id", message: "Monad chain id (10143 testnet, where the contracts live; 143 mainnet)", required: false, prompt: false },
 } satisfies InputSchema;
 type RedeemResult = { chainId: number; token: string; id: number; label: string; qty: number; accountRef: string; tx: string };
 
@@ -19,7 +19,7 @@ export default class CorpusRedeem extends CorpusCommand<RedeemResult> {
   protected readonly pluginCommandId = "corpus:redeem";
   async execute(io: CommandIO): Promise<RedeemResult> {
     const { id, account, qty, token, chainId } = await io.resolveInputs(inputs);
-    const chain = resolveChain(chainId); const addr = requireAddress(token, "token", DEPLOYMENTS[chain.chainId]?.token); const c = this.client(chain);
+    const chain = resolveChain(chainId || 10143); const addr = requireAddress(token, "token", DEPLOYMENTS[chain.chainId]?.token); const c = this.client(chain);
     const sizeId = BigInt(id); const n = BigInt(qty || "1"); const me = await this.activeAddress();
     const [t, held] = await Promise.all([c.readContract({ address: addr, abi: tokenAbi, functionName: "types", args: [sizeId] }), c.readContract({ address: addr, abi: tokenAbi, functionName: "balanceOf", args: [me, sizeId] })]);
     if (held < n) throw new CommandError("INSUFFICIENT_TOKENS", `The account holds ${held} of ${t[1]}.`, "Mint first, or lower qty.");

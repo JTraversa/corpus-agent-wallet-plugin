@@ -6,7 +6,7 @@ const inputs = {
   id: { type: InputFieldType.Text, flag: "id", message: "Size id (see `mm corpus sizes`)", required: true, index: 0 },
   qty: { type: InputFieldType.Text, flag: "qty", message: "How many machines", required: false, prompt: false, index: 1 },
   token: { type: InputFieldType.Text, flag: "token", message: "ComputeToken address", required: false, prompt: false },
-  chainId: { type: InputFieldType.Text, flag: "chain-id", message: "Monad chain id (143 or 10143)", required: false, prompt: false },
+  chainId: { type: InputFieldType.Text, flag: "chain-id", message: "Monad chain id (10143 testnet, where the contracts live; 143 mainnet)", required: false, prompt: false },
 } satisfies InputSchema;
 type MintResult = { chainId: number; token: string; id: number; label: string; qty: number; paidUsdc: string; approveTx?: string; mintTx: string };
 
@@ -18,7 +18,7 @@ export default class CorpusMint extends CorpusCommand<MintResult> {
   protected readonly pluginCommandId = "corpus:mint";
   async execute(io: CommandIO): Promise<MintResult> {
     const { id, qty, token, chainId } = await io.resolveInputs(inputs);
-    const chain = resolveChain(chainId); const addr = requireAddress(token, "token", DEPLOYMENTS[chain.chainId]?.token); const c = this.client(chain);
+    const chain = resolveChain(chainId || 10143); const addr = requireAddress(token, "token", DEPLOYMENTS[chain.chainId]?.token); const c = this.client(chain);
     const sizeId = BigInt(id); const n = BigInt(qty || "1"); if (n <= 0n) throw new CommandError("INVALID_INPUT", "qty must be at least 1.", "Pass a positive quantity.");
     const t = await c.readContract({ address: addr, abi: tokenAbi, functionName: "types", args: [sizeId] });
     if (!t[5]) throw new CommandError("INACTIVE", `${t[1]} is not open for minting.`, "Run `mm corpus sizes` for the active sizes.");

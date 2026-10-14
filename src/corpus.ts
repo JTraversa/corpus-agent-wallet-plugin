@@ -6,14 +6,17 @@ export const FEED = "https://cloud.trycorpus.ai";
 
 export const CHAINS = {
   143: { chainId: 143, name: "Monad", caip2: "eip155:143", usdc: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603" as Address, rpc: "https://rpc.monad.xyz", explorer: "https://monadexplorer.com" },
-  10143: { chainId: 10143, name: "Monad Testnet", caip2: "eip155:10143", usdc: "0x0000000000000000000000000000000000000000" as Address, rpc: "https://testnet-rpc.monad.xyz", explorer: "https://testnet.monadexplorer.com" },
+  10143: { chainId: 10143, name: "Monad Testnet", caip2: "eip155:10143", usdc: "0x966ca2c9a5c3927C6AB1Ccd7068E13e698458A2F" as Address /* mock USDC used by the testnet deployment */, rpc: "https://testnet-rpc.monad.xyz", explorer: "https://testnet.monadexplorer.com" },
 } as const;
 export type ChainInfo = (typeof CHAINS)[keyof typeof CHAINS];
 
 /** Deployed contracts; override with CORPUS_TOKEN / CORPUS_ORACLE or --token / --oracle. Filled after deployment (see corpus-monad/deployments.md). */
 export const DEPLOYMENTS: Record<number, { token?: Address; oracle?: Address }> = {
   143: { token: (process.env.CORPUS_TOKEN as Address) || undefined, oracle: (process.env.CORPUS_ORACLE as Address) || undefined },
-  10143: { token: (process.env.CORPUS_TOKEN as Address) || undefined, oracle: (process.env.CORPUS_ORACLE as Address) || undefined },
+  10143: {
+    token: (process.env.CORPUS_TOKEN as Address) || "0xc6B96de257d3E1285080Fdb43BeF60DcbeDcd70c",
+    oracle: (process.env.CORPUS_ORACLE as Address) || "0x0452ABd329B6C4006ECCdA9FBb5c9e87F5d73744",
+  },
 };
 
 export function resolveChain(input: unknown): ChainInfo {
